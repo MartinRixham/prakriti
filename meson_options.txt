@@ -1,0 +1,2 @@
+option('demo', type: 'boolean', value: true,
+  description: 'Install the demo app as well as the library')

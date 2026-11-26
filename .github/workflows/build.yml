@@ -1,0 +1,98 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    container: fedora:latest
+    steps:
+      - name: Install dependencies
+        # JavaScriptCore 6.0 (from webkitgtk6.0) is loaded by the messaging tests.
+        run: dnf install -y --setopt=install_weak_deps=False gjs meson ninja-build webkitgtk6.0
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: meson setup _build
+      - name: Test
+        run: meson test -C _build --print-errorlogs
+      - name: Upload test log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: testlog
+          path: _build/meson-logs/testlog.txt
+
+  flatpak:
+    name: Flatpak
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-51
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+      - uses: flathub-infra/flatpak-github-actions/flatpak-builder@master
+        with:
+          bundle: org.example.App.flatpak
+          manifest-path: org.example.App.json
+          cache-key: flatpak-builder-${{ hashFiles('org.example.App.json') }}
+
+  release:
+    name: Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [test, flatpak]
+    runs-on: ubuntu-latest
+    container: fedora:latest
+    permissions:
+      contents: write
+    steps:
+      - name: Install dependencies
+        run: dnf install -y --setopt=install_weak_deps=False gjs meson ninja-build webkitgtk6.0 git gh
+      - uses: actions/checkout@v4
+      - name: Check the tag matches the meson version
+        run: |
+          version=$(meson introspect --projectinfo meson.build | python3 -c 'import json,sys; print(json.load(sys.stdin)["version"])')
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match meson.build version $version"
+            exit 1
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+      - name: Make the source tarball
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          meson setup _build
+          meson dist -C _build --formats xztar --no-tests
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tarball=_build/meson-dist/prakriti-$VERSION.tar.xz
+          sha256=$(sha256sum "$tarball" | cut -d' ' -f1)
+          url=https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/prakriti-$VERSION.tar.xz
+          cat > notes.md <<NOTES
+          Add the library to a Flatpak manifest as a module before your app:
+
+          \`\`\`json
+          {
+            "name": "prakriti",
+            "buildsystem": "meson",
+            "config-opts": ["-Ddemo=false"],
+            "sources": [
+              {
+                "type": "archive",
+                "url": "$url",
+                "sha256": "$sha256"
+              }
+            ]
+          }
+          \`\`\`
+
+          It installs the launcher to \`/app/share/prakriti/launcher\` and the frontend lib to \`/app/share/prakriti/frontend/lib\`.
+          NOTES
+          gh release create "$GITHUB_REF_NAME" "$tarball" "$tarball.sha256sum" \
+            --repo "$GITHUB_REPOSITORY" --title "Prakriti $VERSION" --notes-file notes.md --generate-notes
