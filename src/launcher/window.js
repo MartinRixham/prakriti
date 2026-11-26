@@ -23,7 +23,7 @@ export class AppWindow {
 
         const win = new Adw.ApplicationWindow({
             application: app,
-            title,
+            title: title ?? '',
             default_width: width,
             default_height: height,
             content: view,
@@ -85,6 +85,14 @@ export class AppWindow {
         });
         win.connect('notify::is-active', () => controller.activeChanged());
         win.connect('close-request', () => { popups.closeAll(); return false; });
+
+        // Without a title of its own the window takes the page's <title>,
+        // and follows it when the page changes document.title.
+        if (title === undefined) {
+            view.connect('notify::title', () => {
+                if (view.title) win.title = view.title;
+            });
+        }
 
         view.load_uri(uri);
         win.present();

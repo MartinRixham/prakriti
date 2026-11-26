@@ -29,9 +29,10 @@ export class MenuButton {
     onBind(element) {
         this.#element = element;
 
-        // The launcher's popup grab sees to outside clicks and focus.
         window.addEventListener('apppopup', ({ detail }) => {
-            if (detail.id !== POPUP_ID) return;
+            if (detail.id !== POPUP_ID) {
+                return;
+            }
 
             if (detail.type === 'activate') {
                 const [s, i] = detail.value ?? [];
@@ -44,9 +45,9 @@ export class MenuButton {
     }
 
     close() {
-        if (!this.open) return;
-        // 'closed' comes back once it has gone.
-        popupHandler?.postMessage({ type: 'close', id: POPUP_ID });
+        if (this.open) {
+            popupHandler?.postMessage({ type: 'close', id: POPUP_ID });
+        }
     }
 
     #toggle() {
@@ -63,8 +64,7 @@ export class MenuButton {
 
         const button = this.#element.querySelector('[data-bind=button]');
         const { x, y, width, height } = button.getBoundingClientRect();
-        // The popup matches the page's theme, as Application sets it on the
-        // root element.
+
         const root = document.documentElement;
         const dark = root.dataset.theme === 'dark';
         const accent = root.style.getPropertyValue('--accent-bg').trim();
