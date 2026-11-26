@@ -1,0 +1,346 @@
+/* GTK4 / libadwaita look. Values come from libadwaita 1.10's own stylesheet.
+   Follows the system dark/light setting: light-dark(<light>, <dark>).
+   Note: @media (prefers-color-scheme) does NOT follow it (see app.js). */
+
+:root {
+    color-scheme: light dark;
+
+    /* libadwaita named colours */
+    --window-bg:     light-dark(#fafafb, #222226);
+    --window-fg:     light-dark(rgb(0 0 6 / 80%), #ffffff);
+    --view-bg:       light-dark(#ffffff, #1d1d20);
+    --view-fg:       var(--window-fg);
+    --headerbar-bg:  var(--window-bg);   /* flat: same as the page */
+    --headerbar-fg:  var(--window-fg);
+    --headerbar-backdrop: var(--window-bg);
+    --card-bg:       light-dark(#ffffff, rgb(255 255 255 / 8%));
+    --card-shade:    light-dark(rgb(0 0 6 / 7%), rgb(0 0 6 / 36%));
+    --shade:         light-dark(rgb(0 0 6 / 7%), rgb(0 0 6 / 25%));
+    --border-opacity: 15%;
+    --dim-opacity:    55%;
+    --disabled-opacity: 50%;
+
+    /* Accent: the user's GNOME accent colour (set from app.js), blue if unknown.
+       --accent is the readable text/icon version, like libadwaita's. */
+    --accent-bg:  #3584e4;
+    --accent-fg:  #ffffff;
+    --accent:     oklab(from var(--accent-bg) light-dark(min(l, 0.5), max(l, 0.85)) a b);
+    --destructive-bg: light-dark(#e01b24, #c01c28);
+    --success-bg:     light-dark(#2ec27e, #26a269);
+
+    /* Older names the template used, mapped onto the Adwaita palette */
+    --bg:       var(--window-bg);
+    --bg-alt:   var(--card-bg);
+    --fg:       var(--window-fg);
+    --fg-muted: color-mix(in srgb, var(--window-fg) var(--dim-opacity), transparent);
+    --border:   color-mix(in srgb, currentColor var(--border-opacity), transparent);
+    --danger:   oklab(from var(--destructive-bg) light-dark(min(l, 0.5), max(l, 0.85)) a b);
+    --success:  oklab(from var(--success-bg) light-dark(min(l, 0.5), max(l, 0.85)) a b);
+
+    --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* ---- Window ------------------------------------------------------------ */
+/* libadwaita draws the window's frame (rounded corners, shadow, border) and
+   clips the page to it; .window fills it. */
+
+html, body {
+    height: 100%;
+    margin: 0;
+    background: transparent;
+    overflow: hidden;
+}
+body {
+    font: 11pt "Adwaita Sans", Cantarell, system-ui, sans-serif;
+    color: var(--window-fg);
+    -webkit-font-smoothing: antialiased;
+}
+
+.window {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--window-bg);
+    color: var(--window-fg);
+}
+
+.content {
+    flex: 1;
+    overflow: auto;
+}
+
+::selection { background: color-mix(in srgb, var(--accent-bg) 25%, transparent); }
+
+/* Overlay-style thin scrollbars, like GtkScrolledWindow */
+.content::-webkit-scrollbar { width: 14px; height: 14px; }
+.content::-webkit-scrollbar-track { background: transparent; }
+.content::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, currentColor 20%, transparent);
+    border: 4px solid transparent;
+    background-clip: padding-box;
+    border-radius: 99px;
+}
+.content::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in srgb, currentColor 40%, transparent);
+    border-width: 3px;
+}
+
+/* ---- Header bar (AdwHeaderBar, flat style) ------------------------------ */
+/* Same colour as the page and no bottom border, like a flat header bar in
+   an AdwToolbarView. */
+
+.headerbar {
+    flex: none;
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: 47px;
+    padding: 6px 7px 7px;
+    box-sizing: border-box;
+    background: var(--headerbar-bg);
+    color: var(--headerbar-fg);
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: default;
+}
+.headerbar .start,
+.headerbar .end {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    position: relative;   /* above the centred title */
+    z-index: 1;
+}
+.headerbar .end { margin-left: auto; }
+
+/* Centred on the window, not between the button groups (AdwWindowTitle) */
+.headerbar .title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 50%;
+    padding: 0 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;   /* clicks fall through to the drag region */
+}
+
+:root.backdrop .headerbar { background: var(--headerbar-backdrop); }
+:root.backdrop .headerbar > * { opacity: 0.5; }
+.headerbar,
+.headerbar > * { transition: opacity 200ms ease-out; }
+
+/* Fullscreen: no title bar, like GTK */
+:root.fullscreen .headerbar { display: none; }
+
+/* Window controls (GtkWindowControls): 16px icon in a 24px circle */
+.headerbar .wc { display: flex; align-items: center; }
+.headerbar .wc:empty { display: none; }   /* no buttons on this side */
+.headerbar .wc button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    min-height: 34px;
+    padding: 0;
+    border: none;
+    background: none;
+    color: inherit;
+}
+.headerbar .wc button > svg {
+    box-sizing: content-box;
+    padding: 4px;
+    border-radius: 100%;
+    background: color-mix(in srgb, currentColor 10%, transparent);
+    transition: background 200ms var(--ease);
+}
+.headerbar .wc button:hover > svg  { background: color-mix(in srgb, currentColor 15%, transparent); }
+.headerbar .wc button:active > svg { background: color-mix(in srgb, currentColor 30%, transparent); }
+
+/* ---- Buttons (GtkButton) ------------------------------------------------ */
+/* <button>                       regular
+   <button class="flat">          no background until hovered (header bars)
+   <button class="suggested-action">  accent-coloured
+   <button class="destructive-action">
+   <button class="pill">          large rounded (status pages)            */
+
+svg { width: 16px; height: 16px; fill: currentColor; flex: none; }
+
+button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 34px;
+    min-width: 34px;
+    padding: 0 10px;
+    box-sizing: border-box;
+    border: none;
+    border-radius: 9px;
+    font: inherit;
+    font-weight: 700;
+    color: inherit;
+    background: color-mix(in srgb, currentColor 10%, transparent);
+    cursor: default;
+    outline: 0 solid transparent;
+    outline-offset: 4px;
+    transition: background 200ms var(--ease),
+                outline-color 200ms var(--ease), outline-width 200ms var(--ease),
+                outline-offset 200ms var(--ease);
+}
+button:has(> svg:only-child) { padding: 0; }
+button:hover  { background: color-mix(in srgb, currentColor 15%, transparent); }
+button:active { background: color-mix(in srgb, currentColor 30%, transparent); }
+button:disabled { opacity: var(--disabled-opacity); }
+
+button.flat { background: transparent; }
+button.flat:hover  { background: color-mix(in srgb, currentColor 7%, transparent); }
+button.flat:active { background: color-mix(in srgb, currentColor 16%, transparent); }
+
+button.suggested-action,
+button.destructive-action { color: var(--accent-fg); }
+button.suggested-action   { background: var(--accent-bg); }
+button.destructive-action { background: var(--destructive-bg); color: #fff; }
+button.suggested-action:hover,
+button.destructive-action:hover  { background-image: linear-gradient(rgb(255 255 255 / 10%), rgb(255 255 255 / 10%)); }
+button.suggested-action:active,
+button.destructive-action:active { background-image: linear-gradient(rgb(0 0 0 / 20%), rgb(0 0 0 / 20%)); }
+
+button.pill { padding: 10px 32px; border-radius: 9999px; }
+
+/* Keyboard focus ring, as GTK draws it */
+:is(button, input, textarea, select, a):focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--accent) 50%, transparent);
+    outline-offset: -2px;
+}
+button:focus-visible { outline-offset: 2px; }
+.headerbar .wc button:focus-visible { outline-offset: -2px; border-radius: 100%; }
+
+/* ---- Entries (GtkEntry) ------------------------------------------------- */
+
+input:not([type="checkbox"], [type="radio"], [type="range"]),
+textarea, select {
+    min-height: 34px;
+    padding: 0 9px;
+    box-sizing: border-box;
+    border: none;
+    border-radius: 9px;
+    font: inherit;
+    color: inherit;
+    background: color-mix(in srgb, currentColor 10%, transparent);
+    caret-color: currentColor;
+}
+textarea { padding: 8px 9px; }
+input:focus-visible, textarea:focus-visible, select:focus-visible { outline-offset: -2px; }
+input[type="checkbox"], input[type="radio"], input[type="range"] { accent-color: var(--accent-bg); }
+
+a { color: var(--accent); }
+a:hover { text-decoration-thickness: 2px; }
+
+/* ---- Cards and boxed lists ---------------------------------------------- */
+
+.card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 0 0 1px light-dark(rgb(0 0 6 / 3%), rgb(0 0 6 / 9%)),
+                0 1px 3px 1px light-dark(rgb(0 0 6 / 7%), rgb(0 0 6 / 30%)),
+                0 2px 6px 2px light-dark(rgb(0 0 6 / 3%), rgb(0 0 6 / 15%));
+}
+.boxed-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+.boxed-list > * {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 50px;
+    padding: 8px 12px;
+    box-sizing: border-box;
+}
+.boxed-list > * + * { box-shadow: inset 0 1px var(--card-shade); }
+
+/* ---- Typography (libadwaita style classes) ------------------------------ */
+
+.title-1 { font-size: 20pt; font-weight: 800; margin: 0; }
+.title-2 { font-size: 15pt; font-weight: 800; margin: 0; }
+.title-3 { font-size: 15pt; font-weight: 700; margin: 0; }
+.title-4 { font-size: 13pt; font-weight: 700; margin: 0; }
+.heading { font-weight: 700; }
+.dim-label { opacity: var(--dim-opacity); }
+.body { margin: 0; line-height: 1.4; }
+
+/* ---- Status page (AdwStatusPage) ---------------------------------------- */
+
+.status-page {
+    min-height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 36px;
+    padding: 36px 12px;
+    text-align: center;
+}
+.status-page > .icon {
+    width: 128px;
+    height: 128px;
+    fill: none;   /* outline icon: drawn with stroke */
+    color: color-mix(in srgb, currentColor var(--dim-opacity), transparent);
+}
+.status-page .text { display: flex; flex-direction: column; gap: 12px; max-width: 360px; }
+
+/* ---- Menu button and popover menu (GtkMenuButton, GtkPopoverMenu) ------ */
+/* The menu opens alone in a GtkPopover (menu-popup.html): GTK draws the
+   popover's background, border, shadow and arrow, and places it; the page
+   is just the contents, on a clear background. */
+
+.menu-button { display: flex; }
+
+button.flat.checked,
+button.flat.checked:hover { background: color-mix(in srgb, currentColor 10%, transparent); }
+button.flat.checked:active { background: color-mix(in srgb, currentColor 16%, transparent); }
+
+.popover {
+    width: max-content;
+    min-width: 200px;
+    font-weight: 400;
+    color: light-dark(rgb(0 0 6 / 80%), #ffffff);
+    cursor: default;
+}
+
+.popover-contents { padding: 6px; }
+
+.menu-section {
+    display: flex;
+    flex-direction: column;
+}
+.menu-section + .menu-section {
+    margin-top: 6px;
+    padding-top: 6px;
+    box-shadow: inset 0 1px light-dark(rgb(0 0 6 / 10%), rgb(255 255 255 / 10%));
+}
+/* The separator runs the full width of the popover, as in GTK. */
+.menu-section + .menu-section { margin-inline: -6px; padding-inline: 6px; }
+
+.popover .model-button {
+    justify-content: flex-start;
+    min-height: 32px;
+    padding: 0 12px;
+    border-radius: 6px;
+    font-weight: 400;
+    text-align: start;
+    white-space: nowrap;
+    background: transparent;
+}
+.popover .model-button:hover,
+.popover .model-button:focus-visible { background: color-mix(in srgb, currentColor 7%, transparent); }
+.popover .model-button:active { background: color-mix(in srgb, currentColor 16%, transparent); }
+.popover .model-button:focus-visible { outline-offset: -2px; }

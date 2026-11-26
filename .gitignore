@@ -1,0 +1,17 @@
+# Flatpak
+.flatpak-builder/
+build-dir/
+repo/
+*.flatpak
+
+# Meson build directories
+_build/
+build/
+builddir/
+
+# Editors and OS
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
