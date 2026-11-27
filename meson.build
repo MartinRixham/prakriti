@@ -45,8 +45,23 @@ endforeach
 
 endif
 
+# The tests run from a copy of src/ and test/ in the build directory. GNOME
+# Builder runs tests in the flatpak runtime with only its build cache
+# mounted, so the source tree isn't visible there. The copy is redone on
+# every build (it's small) so it never goes stale.
+test_stage = custom_target('test-stage',
+  output: 'test-stage.stamp',
+  command: ['sh', '-c',
+    'rm -rf "$1" && mkdir -p "$1" && cp -R "$2/src" "$2/test" "$1" && touch "$3"',
+    'sh', meson.current_build_dir() / 'test-stage',
+    meson.current_source_dir(), '@OUTPUT@'],
+  build_by_default: true,
+  build_always_stale: true,
+)
+
 test('unit', gjs,
-  args: ['-m', files('test/run.js')],
+  args: ['-m', meson.current_build_dir() / 'test-stage/test/run.js'],
+  depends: test_stage,
   protocol: 'tap',
   workdir: meson.current_build_dir(),
 )
