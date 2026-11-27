@@ -6,8 +6,6 @@ const POPUP_ID = 'main-menu';
 
 export class MenuButton {
 
-    popupHandler;
-
     #menu;
 
     open = false;
@@ -17,8 +15,6 @@ export class MenuButton {
     }
 
     async onBind(element) {
-        this.popupHandler = window.webkit.messageHandlers.appPopup;
-
         element.innerHTML = await loadTemplate("lib/html/button.html");
 
         window.addEventListener('apppopup', ({ detail }) => {
@@ -34,7 +30,7 @@ export class MenuButton {
     #openPopup(element) {
         const { x, y, width, height } = element.getBoundingClientRect();
 
-        this.popupHandler.postMessage({
+        window.webkit.messageHandlers.appPopup.postMessage({
             type: 'open',
             id: POPUP_ID,
             page: this.#menu.page(),

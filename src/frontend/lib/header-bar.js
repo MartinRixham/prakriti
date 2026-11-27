@@ -6,7 +6,7 @@ import { Close } from './close.js';
 
 export class HeaderBar {
 
-    #title;
+    #titleLabel;
 
     startControls = [];
 
@@ -17,7 +17,7 @@ export class HeaderBar {
     end
 
     constructor(title, start, end) {
-        this.#title = title;
+        this.#titleLabel = title;
         this.start = start;
         this.end = end;
     }
@@ -30,7 +30,7 @@ export class HeaderBar {
         }
     }
 
-    titleLabel = new Text(() => this.#title);
+    title = new Text(() => this.#titleLabel);
 
     setButtonLayout(layout) {
         const [start, end = ""] = layout.split(':');
