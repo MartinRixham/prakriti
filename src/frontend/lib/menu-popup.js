@@ -3,8 +3,8 @@
 //   { sections: [["Label", ...], ...], dark: bool, accent: '#rrggbb' | '' }
 // and gets back { type: 'activate', value: [section, item] }.
 
-const handler = window.webkit?.messageHandlers?.appPopup;
-const { data = {} } = window.__appPopup ?? {};
+const handler = window.webkit.messageHandlers.appPopup;
+const { data = {} } = window.__appPopup;
 
 const root = document.documentElement;
 const theme = data.dark ? 'dark' : 'light';
@@ -24,7 +24,7 @@ const contents = document.querySelector('.popover-contents');
         item.className = 'model-button';
         item.setAttribute('role', 'menuitem');
         item.textContent = label;
-        item.addEventListener('click', () => handler?.postMessage({ type: 'activate', value: [s, i] }));
+        item.addEventListener('click', () => handler.postMessage({ type: 'activate', value: [s, i] }));
         // GTK moves the focus with the pointer, so hover and keys agree.
         item.addEventListener('mousemove', () => item.focus({ focusVisible: false }));
         group.append(item);
@@ -38,7 +38,7 @@ const items = () => [...contents.querySelectorAll('.model-button')];
 document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
         event.preventDefault();
-        handler?.postMessage({ type: 'close' });
+        handler.postMessage({ type: 'close' });
         return;
     }
 
@@ -65,7 +65,7 @@ await document.fonts.ready;
 
 const box = popover.getBoundingClientRect();
 
-handler?.postMessage({
+handler.postMessage({
     type: 'size',
     width: Math.ceil(box.width),
     height: Math.ceil(box.height),

@@ -2,9 +2,9 @@ import { loadTemplate } from './files.js';
 
 export class Window {
 
-    theme = "";          // 'true' / 'false' from the desktop, '' while unknown
+    theme = "";
 
-    accent = "";        // the user's GNOME accent colour, '' if unknown
+    accent = "";
 
     focused = true;
 

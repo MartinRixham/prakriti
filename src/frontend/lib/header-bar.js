@@ -3,29 +3,23 @@ import { loadIcon, loadTemplate } from './files.js';
 import { Minimize } from './minimize.js';
 import { Maximize } from './maximize.js';
 import { Close } from './close.js';
-import { MenuButton } from './menu-button.js';
 
 export class HeaderBar {
 
-    title = "";
+    #title;
 
     startControls = [];
 
-    menu = new MenuButton(loadIcon, [
-        [
-            { label: "Preferences" },
-            { label: "Keyboard Shortcuts" },
-            { label: "About App" },
-        ],
-        [
-            { label: "Quit", action: app.win.close },
-        ],
-    ]);
-
     endControls = [];
 
-    constructor(title) {
-        this.title = title;
+    start;
+
+    end
+
+    constructor(title, start, end) {
+        this.#title = title;
+        this.start = start;
+        this.end = end;
     }
 
     async onBind(element) {
@@ -36,7 +30,7 @@ export class HeaderBar {
         }
     }
 
-    titleLabel = new Text(() => this.title);
+    titleLabel = new Text(() => this.#title);
 
     setButtonLayout(layout) {
         const [start, end = ""] = layout.split(':');

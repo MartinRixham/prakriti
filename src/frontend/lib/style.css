@@ -297,12 +297,7 @@ a:hover { text-decoration-thickness: 2px; }
 }
 .status-page .text { display: flex; flex-direction: column; gap: 12px; max-width: 360px; }
 
-/* ---- Menu button and popover menu (GtkMenuButton, GtkPopoverMenu) ------ */
-/* The menu opens alone in a GtkPopover (menu-popup.html): GTK draws the
-   popover's background, border, shadow and arrow, and places it; the page
-   is just the contents, on a clear background. */
-
-.menu-button { display: flex; }
+/* ---- popover menu ------ */
 
 button.flat.checked,
 button.flat.checked:hover { background: color-mix(in srgb, currentColor 10%, transparent); }

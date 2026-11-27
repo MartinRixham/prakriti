@@ -2,7 +2,6 @@ import JavaScriptCore from 'gi://JavaScriptCore?version=6.0';
 
 import { answerCall, parseMessage } from './protocol.js';
 
-// postMessage(msg) → fn(msg).
 export function onMessage(contentManager, name, fn) {
     contentManager.connect(`script-message-received::${name}`, (_contentManager, value) => {
         try {
@@ -15,8 +14,6 @@ export function onMessage(contentManager, name, fn) {
     contentManager.register_script_message_handler(name, null);
 }
 
-// The same, where the page's postMessage promise resolves with what fn(msg)
-// returns (or resolves to), or rejects with what it throws.
 export function onCall(contentManager, name, fn) {
     contentManager.connect(`script-message-with-reply-received::${name}`, (_contentManager, value, reply) => {
         const context = value.get_context();

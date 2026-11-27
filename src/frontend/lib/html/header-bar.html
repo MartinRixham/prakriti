@@ -1,13 +1,13 @@
 <div class="headerbar" data-app-drag>
   <div class="start">
     <div class="wc" data-bind="startControls"><button data-bind="control"></button></div>
-    <button class="flat" id="btn-new" title="New" data-icon="actions/list-add-symbolic.svg"></button>
+    <span data-bind="start"><div></div></span>
   </div>
   <div class="title" data-bind="titleLabel"></div>
   <div class="end">
-    <div class="menu-button" data-bind="menu">
-      <button class="flat" id="btn-menu" data-bind="button"></button>
-    </div>
-    <div class="wc" data-bind="endControls"><button data-bind="control"></button></div>
+    <span data-bind="end"><div></div></span>
+    <span class="wc" data-bind="endControls">
+      <button data-bind="control"></button>
+    </span>
   </div>
 </div>

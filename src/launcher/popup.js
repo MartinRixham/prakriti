@@ -8,7 +8,6 @@ import { popupInitScript } from './protocol.js';
 import { onMessage } from './messaging.js';
 import { fireEvent, makeContentManager, makeSettings, makeTransparent } from './webview.js';
 
-// The page fills the popover: no padding of GTK's own around it.
 const POPOVER_STYLE = 'popover.web-popup > contents { padding: 0; }';
 
 let styleInstalled = false;
@@ -22,12 +21,10 @@ function installStyle() {
         Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
 }
 
-// A popover with the popup's page in it, run by `session`.
 function createPopover(opener, { id, uri, anchor, data }, session) {
     const contentManager = makeContentManager(popupInitScript(id, data));
     onMessage(contentManager, 'appPopup', (msg) => session.pageMessage(msg));
 
-    // related-view: the opener's web process, so it opens quickly.
     const view = new WebKit.WebView({
         related_view: opener,
         user_content_manager: contentManager,

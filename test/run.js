@@ -1,11 +1,9 @@
-// Runs every test: gjs -m test/run.js [filter]
-// The filter, if given, keeps the tests whose "suite: name" contains it.
-// No display needed: nothing here loads GTK or WebKit.
-
 import './frontend/lib/window.test.js';
 import './frontend/lib/close.test.js';
 import './frontend/lib/minimize.test.js';
 import './frontend/lib/maximize.test.js';
+
+import './frontend/app-header.test.js';
 
 import './launcher/protocol.test.js';
 import './launcher/paths.test.js';

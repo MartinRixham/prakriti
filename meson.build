@@ -45,8 +45,6 @@ endforeach
 
 endif
 
-# Every unit test, frontend and launcher, under gjs. No display needed:
-# nothing they load uses GTK or WebKit.
 test('unit', gjs,
   args: ['-m', files('test/run.js')],
   protocol: 'tap',
