@@ -1,37 +1,21 @@
 import { assert, suite, test } from '../harness.js';
-import { Desktop, rgbaToHex } from '../../src/launcher/desktop.js';
+import { Desktop } from '../../src/launcher/desktop.js';
 import { fakeGObject } from './fakes.js';
 
 suite('launcher/desktop');
 
-const BLUE = { red: 0x35 / 255, green: 0x84 / 255, blue: 0xe4 / 255, alpha: 1 };
-
-function fakeStyle({ dark = false, accents = true, accent = BLUE } = {}) {
+function fakeStyle(dark = false, accents = true) {
     return fakeGObject({
         dark,
         system_supports_accent_colors: accents,
-        get_accent_color_rgba: () => accent,
+        get_accent_color_rgba: () => ({ red: 0x35 / 255, green: 0x84 / 255, blue: 0xe4 / 255, alpha: 1 })
     });
 }
 
 const fakeSettings = (layout = 'appmenu:close') => fakeGObject({ gtk_decoration_layout: layout });
 
-test('rgbaToHex gives #rrggbb', () => {
-    assert.equal(rgbaToHex(BLUE), '#3584e4');
-    assert.equal(rgbaToHex({ red: 0, green: 0, blue: 0 }), '#000000');
-    assert.equal(rgbaToHex({ red: 1, green: 1, blue: 1 }), '#ffffff');
-});
-
-test('rgbaToHex rounds to the nearest step', () => {
-    assert.equal(rgbaToHex({ red: 0.5, green: 0.499, blue: 0.002 }), '#807f01');
-});
-
-test('rgbaToHex clamps out-of-range channels', () => {
-    assert.equal(rgbaToHex({ red: 1.5, green: -0.2, blue: 0.5 }), '#ff0080');
-});
-
 test('dark follows the style manager', () => {
-    const style = fakeStyle({ dark: true });
+    const style = fakeStyle(true);
     const desktop = new Desktop(style, fakeSettings());
     assert.equal(desktop.dark, true);
     style.dark = false;
@@ -39,8 +23,8 @@ test('dark follows the style manager', () => {
 });
 
 test('dark is a boolean', () => {
-    assert.equal(new Desktop(fakeStyle({ dark: undefined }), fakeSettings()).dark, false);
-    assert.equal(new Desktop(fakeStyle({ dark: 1 }), fakeSettings()).dark, true);
+    assert.equal(new Desktop(fakeStyle(undefined), fakeSettings()).dark, false);
+    assert.equal(new Desktop(fakeStyle(1), fakeSettings()).dark, true);
 });
 
 test('accent is the system accent as hex', () => {
@@ -48,7 +32,7 @@ test('accent is the system accent as hex', () => {
 });
 
 test('accent is empty where the system has no accent colours', () => {
-    const desktop = new Desktop(fakeStyle({ accents: false }), fakeSettings());
+    const desktop = new Desktop(fakeStyle(undefined, false), fakeSettings());
     assert.equal(desktop.accent, '');
 });
 
@@ -67,7 +51,7 @@ test('buttonLayout is empty when GTK has none', () => {
 test('onChange watches everything the style is made of', () => {
     const style = fakeStyle();
     const settings = fakeSettings();
-    new Desktop(style, settings).onChange(() => {});
+    new Desktop(style, settings).onChange(() => { });
     assert.deepEqual(style.connected().sort(),
         ['notify::accent-color', 'notify::dark', 'notify::system-supports-accent-colors']);
     assert.deepEqual(settings.connected(), ['notify::gtk-decoration-layout']);

@@ -1,6 +1,3 @@
-// The script the launcher injects into its pages (src/launcher/inject/
-// bridge.js), run in a JavaScriptCore page.
-
 import Gio from 'gi://Gio';
 
 import { assert, suite, test } from '../harness.js';
@@ -12,9 +9,6 @@ const BRIDGE = new TextDecoder().decode(
     Gio.File.new_for_uri(import.meta.url).get_parent().resolve_relative_path('../../src/launcher/inject/bridge.js')
         .load_contents(null)[1]);
 
-// A page with the bridge in it, and the launcher's end of its handler:
-// calls are recorded in __posted and answered by __reply(msg), which by
-// default resolves with "reply:<method>". `reply` replaces it (JS source).
 function loadBridge({ reply = '(msg) => Promise.resolve(`reply:${msg.method}`)' } = {}) {
     const page = new Page(`
         globalThis.__posted = [];

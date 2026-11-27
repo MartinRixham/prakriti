@@ -1,8 +1,4 @@
-export function rgbaToHex({ red, green, blue }) {
-    return `#${[red, green, blue]
-        .map((c) => Math.round(Math.min(1, Math.max(0, c)) * 255).toString(16).padStart(2, '0'))
-        .join('')}`;
-}
+import { rgbaToHex } from "./colour.js";
 
 export class Desktop {
 
@@ -27,9 +23,8 @@ export class Desktop {
         return this.#settings.gtk_decoration_layout ?? '';
     }
 
-    // fn(desktop) after any change.
-    onChange(fn) {
-        const changed = () => fn(this);
+    onChange(callback) {
+        const changed = () => callback(this);
         this.#style.connect('notify::dark', changed);
         this.#style.connect('notify::accent-color', changed);
         this.#style.connect('notify::system-supports-accent-colors', changed);

@@ -2,7 +2,6 @@ import { isPopupPage, resolvePage } from './paths.js';
 
 const num = (v) => (Number.isFinite(v) ? v : 0);
 
-// The anchor, from the opener page's CSS px to the web view's.
 export function scaleAnchor(anchor, zoom) {
     const a = anchor && typeof anchor === 'object' ? anchor : {};
     const z = Number.isFinite(zoom) && zoom > 0 ? zoom : 1;

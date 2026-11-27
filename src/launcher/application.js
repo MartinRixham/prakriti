@@ -16,32 +16,21 @@ function readText(file) {
     return new TextDecoder().decode(bytes);
 }
 
-/**
- * @param {object} options
- * @param {string} options.id          application id
- * @param {string} [options.title]    window title and application name;
- *                                     by default the page's <title>, as it changes
- * @param {number} [options.width]     default window size, in pixels
- * @param {number} [options.height]
- * @param {string} [options.frontend] directory holding index.html: absolute,
- *                                     or relative to the main script's directory
- * @param {object} options.api         name → (args) => result, for app.api.call;
- *                                     added to the built-in `icon`, which it may replace
- */
 export function run({ id, title, width = 1000, height = 680, frontend = 'frontend', api = {} }) {
     const frontendDir = Gio.File.new_for_path(System.programPath)
         .get_parent().resolve_relative_path(frontend);
 
     GLib.set_prgname(id);
-    let named = title !== undefined;
-    if (named) GLib.set_application_name(title);
+
+    if (title) {
+        GLib.set_application_name(title);
+    }
 
     const bridge = readText(Gio.File.new_for_uri(import.meta.url)
         .get_parent().resolve_relative_path('inject/bridge.js'));
 
     const app = new Adw.Application({
         application_id: id,
-        // --gapplication-app-id=… runs a second copy beside an installed one.
         flags: Gio.ApplicationFlags.CAN_OVERRIDE_APP_ID,
     });
 
@@ -57,6 +46,7 @@ export function run({ id, title, width = 1000, height = 680, frontend = 'fronten
             main.win.present();
             return;
         }
+
         main = new AppWindow(app, {
             title, width, height,
             uri: `${ORIGIN}/index.html`,
@@ -64,16 +54,16 @@ export function run({ id, title, width = 1000, height = 680, frontend = 'fronten
             desktop: new Desktop(Adw.StyleManager.get_default(), Gtk.Settings.get_default()),
             bridge,
         });
+
         main.win.connect('destroy', () => { main = null; });
 
-        // GLib takes the application name only once: without a title of
-        // our own, the first title the page gives.
-        if (!named) {
+        if (!title) {
             const handler = main.view.connect('notify::title', (view) => {
-                if (!view.title) return;
-                GLib.set_application_name(view.title);
-                named = true;
-                view.disconnect(handler);
+                if (view.title) {
+                    GLib.set_application_name(view.title);
+                    named = true;
+                    view.disconnect(handler);
+                }
             });
         }
     });

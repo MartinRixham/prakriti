@@ -1,8 +1,3 @@
-// The page inside the GtkPopover (see src/launcher/popup.js).
-// The opener passes window.__appPopup.data:
-//   { sections: [["Label", ...], ...], dark: bool, accent: '#rrggbb' | '' }
-// and gets back { type: 'activate', value: [section, item] }.
-
 const handler = window.webkit.messageHandlers.appPopup;
 const { data = {} } = window.__appPopup;
 
@@ -25,7 +20,6 @@ const contents = document.querySelector('.popover-contents');
         item.setAttribute('role', 'menuitem');
         item.textContent = label;
         item.addEventListener('click', () => handler.postMessage({ type: 'activate', value: [s, i] }));
-        // GTK moves the focus with the pointer, so hover and keys agree.
         item.addEventListener('mousemove', () => item.focus({ focusVisible: false }));
         group.append(item);
     });

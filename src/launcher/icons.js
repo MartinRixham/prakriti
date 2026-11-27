@@ -2,7 +2,7 @@ import Gio from 'gi://Gio';
 
 Gio._promisify(Gio.File.prototype, 'load_contents_async');
 
-export const ICON_DIR = '/usr/share/icons/Adwaita/symbolic';
+const ICON_DIR = '/usr/share/icons/Adwaita/symbolic';
 
 export function iconApi(dir = ICON_DIR) {
     return async ({ file }) => {

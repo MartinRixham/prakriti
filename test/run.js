@@ -7,6 +7,7 @@ import './frontend/app-header.test.js';
 
 import './launcher/protocol.test.js';
 import './launcher/paths.test.js';
+import './launcher/colour.test.js';
 import './launcher/desktop.test.js';
 import './launcher/window-controller.test.js';
 import './launcher/popups.test.js';
