@@ -3,8 +3,6 @@ import { PopupSession, Popups, scaleAnchor } from '../../src/launcher/popups.js'
 
 suite('launcher/popups');
 
-// A popover as GTK runs it: popdown() reports closed() back, as the
-// popover's 'closed' signal does.
 function fakePopover(session) {
     const host = {
         session,
@@ -189,7 +187,7 @@ test('a popup ignores messages it does not understand', () => {
 
 test('a popup closed before it has a host still goes', () => {
     const events = [];
-    const session = new PopupSession('p', { onActivate() {}, onGone: () => events.push('gone') });
+    const session = new PopupSession('p', { onActivate() { }, onGone: () => events.push('gone') });
     session.close();
     assert.deepEqual(events, ['gone']);
 });

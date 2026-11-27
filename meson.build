@@ -5,8 +5,6 @@ project('prakriti',
 
 gjs = find_program('gjs')
 
-# The library: the launcher and the frontend lib, for apps to use from
-# <datadir>/prakriti (in a flatpak, /app/share/prakriti).
 libdir = get_option('datadir') / meson.project_name()
 install_subdir('src/launcher', install_dir: libdir)
 install_subdir('src/frontend/lib', install_dir: libdir / 'frontend')
@@ -16,7 +14,6 @@ if get_option('demo')
 app_id = 'org.example.App'
 appdir = get_option('prefix') / get_option('datadir') / 'app'
 
-# The app is plain GJS: main.js, the launcher beside it and the page.
 install_data('src/main.js', install_dir: appdir)
 install_subdir('src/launcher', install_dir: appdir)
 install_subdir('src/frontend', install_dir: appdir)
@@ -26,6 +23,7 @@ wrapper = configure_file(
   output: 'app-wrapper',
   configuration: { 'gjs': gjs.full_path(), 'appdir': appdir },
 )
+
 install_data(wrapper,
   rename: 'app',
   install_dir: get_option('bindir'),
@@ -36,19 +34,8 @@ install_data('data' / app_id + '.desktop',
   install_dir: get_option('datadir') / 'applications',
 )
 
-foreach size : ['128', '256', '512']
-  install_data('data/icons' / app_id + '-' + size + '.png',
-    rename: app_id + '.png',
-    install_dir: get_option('datadir') / 'icons/hicolor' / size + 'x' + size / 'apps',
-  )
-endforeach
-
 endif
 
-# The tests run from a copy of src/ and test/ in the build directory. GNOME
-# Builder runs tests in the flatpak runtime with only its build cache
-# mounted, so the source tree isn't visible there. The copy is redone on
-# every build (it's small) so it never goes stale.
 test_stage = custom_target('test-stage',
   output: 'test-stage.stamp',
   command: ['sh', '-c',
