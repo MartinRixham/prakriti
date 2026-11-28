@@ -18,7 +18,6 @@ export class Popups {
         return [...this.#open.values()];
     }
 
-    // A message from the opener's page.
     handle(msg) {
         if (!msg || typeof msg !== 'object') return;
         if (msg.type === 'open') this.#openPopup(msg);

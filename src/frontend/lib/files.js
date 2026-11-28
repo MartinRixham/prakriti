@@ -4,6 +4,8 @@ export function loadIcon(name) {
 
 export function loadTemplate(file) {
     return fetch(file)
-        .then((response) => (response.ok ? response.text() : ''))
+        // Over file:// a found file has status 0, so response.ok is no
+        // guide; a missing one rejects.
+        .then((response) => response.text())
         .catch(() => '');
 }

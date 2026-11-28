@@ -2,13 +2,10 @@ import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
 import Gtk from 'gi://Gtk?version=4.0';
 import Adw from 'gi://Adw?version=1';
-import WebKit from 'gi://WebKit?version=6.0';
 import System from 'system';
 
 import { Desktop } from './desktop.js';
 import { iconApi } from './icons.js';
-import { ORIGIN, registerScheme } from './scheme.js';
-import { respond } from './webview.js';
 import { AppWindow } from './window.js';
 
 function readText(file) {
@@ -38,7 +35,6 @@ export function run({ id, title, width = 1000, height = 680, frontend = 'fronten
 
     app.connect('startup', () => {
         Gtk.Window.set_default_icon_name(id);
-        registerScheme(WebKit.WebContext.get_default(), frontendDir, respond);
     });
 
     app.connect('activate', () => {
@@ -49,7 +45,7 @@ export function run({ id, title, width = 1000, height = 680, frontend = 'fronten
 
         main = new AppWindow(app, {
             title, width, height,
-            uri: `${ORIGIN}/index.html`,
+            uri: frontendDir.get_child('index.html').get_uri(),
             api: { icon: iconApi(), ...api },
             desktop: new Desktop(Adw.StyleManager.get_default(), Gtk.Settings.get_default()),
             bridge,

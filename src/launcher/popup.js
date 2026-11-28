@@ -51,8 +51,6 @@ function createPopover(opener, { id, uri, anchor, data }, session) {
             view.grab_focus();
         },
         popdown: () => popover.popdown(),
-        // Waits for the main loop: the request often arrives inside a signal
-        // of the popover or its web view.
         dispose() {
             GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
                 popover.unparent();
