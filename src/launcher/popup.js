@@ -4,11 +4,14 @@ import Gtk from 'gi://Gtk?version=4.0';
 import WebKit from 'gi://WebKit?version=6.0';
 
 import { Popups } from './popups.js';
-import { popupInitScript } from './protocol.js';
 import { onMessage } from './messaging.js';
 import { fireEvent, makeContentManager, makeSettings, makeTransparent } from './webview.js';
 
 const POPOVER_STYLE = 'popover.web-popup > contents { padding: 0; }';
+
+export function popupInitScript(id, data) {
+    return `window.__appPopup=${JSON.stringify({ id, data: data ?? null })};`;
+}
 
 let styleInstalled = false;
 

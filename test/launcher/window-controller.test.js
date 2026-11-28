@@ -285,3 +285,26 @@ test('a desktop change resends the style once the page has asked', () => {
     assert.deepEqual(host.page.events.map((e) => e.type), ['appdesktopstyle', 'appdesktopstyle']);
     assert.deepEqual(host.emitted, [{ name: 'theme', detail: { dark: false } }]);
 });
+
+test('the desktop style comes as a plain Event', () => {
+    const { controller, host } = setup();
+    host.page.run('addEventListener("appdesktopstyle", (e) => { globalThis.__kind = [e instanceof Event, e instanceof CustomEvent]; });');
+    controller.desktopStyleRequested();
+    assert.deepEqual(host.page.get('__kind'), [true, false]);
+});
+
+test('the desktop style gives null for what is unknown', () => {
+    const { controller, host } = setup(undefined, fakeDesktop(false, '', ''));
+    controller.desktopStyleRequested();
+    assert.deepEqual(host.page.get('__appDesktopStyle'), { buttonLayout: null, accent: null });
+});
+
+test('the page hears nothing, and nothing breaks, before it has the bridge', () => {
+    const page = new Page();
+    const { controller, desktop } = setup(fakeHost({ runScript: (script) => page.run(script) }));
+    assert.doesNotThrow(() => {
+        controller.stateChanged();
+        desktop.change({ dark: true });
+    });
+    assert.deepEqual(page.events, []);
+});

@@ -108,6 +108,8 @@ test('onCall answers null for nothing', async () => {
     const contentManager = fakeContentManager();
     onCall(contentManager, 'app', () => undefined);
     assert.deepEqual(await contentManager.call('app', '{}'), { value: null });
+    onCall(contentManager, 'app', () => null);
+    assert.deepEqual(await contentManager.call('app', '{}'), { value: null });
 });
 
 test('onCall answers null for what JSON cannot hold', async () => {
@@ -140,4 +142,59 @@ test('onCall answers each call on its own', async () => {
     onCall(contentManager, 'app', (msg) => new Promise((resolve) => setTimeout(() => resolve(msg.n * 10), 30 - msg.n * 10)));
     const answers = await Promise.all([1, 2].map((n) => contentManager.call('app', `{n: ${n}}`)));
     assert.deepEqual(answers, [{ value: 10 }, { value: 20 }]);
+});
+
+test('onCall hands on undefined', async () => {
+    const contentManager = fakeContentManager();
+    const seen = [];
+    onCall(contentManager, 'app', (msg) => { seen.push(msg); });
+    await contentManager.call('app', 'undefined');
+    assert.equal(seen.length, 1);
+    assert.equal(seen[0], undefined);
+});
+
+test('onCall keeps falsy results', async () => {
+    const contentManager = fakeContentManager();
+    for (const result of [0, false, '']) {
+        onCall(contentManager, 'app', () => result);
+        assert.deepEqual(await contentManager.call('app', '{}'), { value: result });
+    }
+});
+
+test('onCall answers a thrown non-error as a string', async () => {
+    const contentManager = fakeContentManager();
+    onCall(contentManager, 'app', () => { throw 'plain'; });
+    assert.deepEqual(await contentManager.call('app', '{}'), { error: 'plain' });
+    onCall(contentManager, 'app', () => Promise.reject(42));
+    assert.deepEqual(await contentManager.call('app', '{}'), { error: '42' });
+});
+
+test('onCall answers an error for a result JSON refuses', async () => {
+    const contentManager = fakeContentManager();
+    onCall(contentManager, 'app', () => 1n);
+    const { error } = await contentManager.call('app', '{}');
+    assert.match(error, /BigInt/);
+});
+
+// A value whose JSON does not parse, which no real JavaScriptCore value gives.
+const badValue = { to_json: () => '{nope', get_context: () => context };
+
+test('onCall answers a message that is not JSON with an error, without calling', () => {
+    const contentManager = fakeContentManager();
+    let called = false;
+    onCall(contentManager, 'app', () => { called = true; });
+    let answer;
+    const reply = { return_error_message: (message) => { answer = message; } };
+    const returned = contentManager.handlers['script-message-with-reply-received::app'](contentManager, badValue, reply);
+    assert.equal(returned, true);
+    assert.match(answer, /^Bad message: /);
+    assert.equal(called, false);
+});
+
+test('onMessage drops a message that is not JSON', () => {
+    const contentManager = fakeContentManager();
+    let called = false;
+    onMessage(contentManager, 'm', () => { called = true; });
+    contentManager.handlers['script-message-received::m'](contentManager, badValue);
+    assert.equal(called, false);
 });

@@ -1,8 +1,15 @@
-import { desktopStyleScript, emitScript } from './protocol.js';
-
 export const WIN_ID = 'main';
 
 export const FOCUS_LOSS_GRACE_MILLISECONDS = 100;
+
+function emitScript(name, detail) {
+    return `window.__appEmit?.(${JSON.stringify(name)},${JSON.stringify(detail ?? null)})`;
+}
+
+function desktopStyleScript(buttonLayout, accent) {
+    const style = { buttonLayout: buttonLayout || null, accent: accent || null };
+    return `window.__appDesktopStyle=${JSON.stringify(style)};window.dispatchEvent(new Event('appdesktopstyle'))`;
+}
 
 export class WindowController {
 

@@ -1,6 +1,18 @@
 import JavaScriptCore from 'gi://JavaScriptCore?version=6.0';
 
-import { answerCall, parseMessage } from './protocol.js';
+function parseMessage(json) {
+    return json === null || json === undefined ? undefined : JSON.parse(json);
+}
+
+async function answerCall(callback, message) {
+    try {
+        const result = await callback(message);
+        return { json: JSON.stringify(result ?? null) ?? 'null' };
+    }
+    catch (event) {
+        return { error: String(event?.message ?? event) };
+    }
+}
 
 export function onMessage(contentManager, name, fn) {
     contentManager.connect(`script-message-received::${name}`, (_contentManager, value) => {
