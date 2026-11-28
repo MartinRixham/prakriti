@@ -5,7 +5,7 @@ Gio._promisify(Gio.File.prototype, 'load_contents_async');
 const ICON_DIR = '/usr/share/icons/Adwaita/symbolic';
 
 export function iconApi(dir = ICON_DIR) {
-    return async ({ file }) => {
+    return async (file) => {
         if (typeof file !== 'string' || file.split('/').includes('..')) {
             throw new Error(`Bad icon path: ${file}`);
         }

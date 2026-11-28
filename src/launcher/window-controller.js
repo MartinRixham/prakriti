@@ -18,14 +18,14 @@ export class WindowController {
 
     #wantsDesktopStyle = false;
 
-    constructor({ host, api = {}, desktop }) {
+    constructor(host, desktop, api = {}) {
         this.#host = host;
         this.#api = api;
         this.#desktop = desktop;
         desktop.onChange(() => this.desktopChanged());
     }
 
-    call({ method, args } = {}) {
+    call(method, args) {
         const host = this.#host;
 
         switch (method) {
@@ -33,7 +33,7 @@ export class WindowController {
                 const name = args?.name;
                 const fn = typeof name === 'string' && Object.hasOwn(this.#api, name) ? this.#api[name] : null;
                 if (typeof fn !== 'function') throw new Error(`No such api: ${name}`);
-                return fn.call(this.#api, args.args ?? {});
+                return fn.apply(this.#api, Array.isArray(args.args) ? args.args : []);
             }
             case 'win.close':
                 // An open popup would keep the window's close from going through.
@@ -59,12 +59,13 @@ export class WindowController {
         }
     }
 
-    recordPress(press) {
-        this.#lastPress = press;
+    recordPress(device, x, y, time) {
+        this.#lastPress = { device, x, y, time };
     }
 
     startDrag() {
-        if (this.#lastPress) this.#host.beginMove(this.#lastPress);
+        const press = this.#lastPress;
+        if (press) this.#host.beginMove(press.device, press.x, press.y, press.time);
     }
 
     state() {
@@ -106,6 +107,6 @@ export class WindowController {
 
     #sendDesktopStyle() {
         if (!this.#wantsDesktopStyle) return;
-        this.#host.runScript(desktopStyleScript(this.#desktop));
+        this.#host.runScript(desktopStyleScript(this.#desktop.buttonLayout, this.#desktop.accent));
     }
 }

@@ -9,7 +9,7 @@ const BRIDGE = new TextDecoder().decode(
     Gio.File.new_for_uri(import.meta.url).get_parent().resolve_relative_path('../../src/launcher/inject/bridge.js')
         .load_contents(null)[1]);
 
-function loadBridge({ reply = '(msg) => Promise.resolve(`reply:${msg.method}`)' } = {}) {
+function loadBridge(reply = '(msg) => Promise.resolve(`reply:${msg.method}`)') {
     const page = new Page(`
         globalThis.__posted = [];
         globalThis.__reply = ${reply};
@@ -27,7 +27,7 @@ function loadBridge({ reply = '(msg) => Promise.resolve(`reply:${msg.method}`)' 
         // A mousedown on an element: \`within\` lists what target.closest()
         // finds, by what it is asked for ('drag' for [data-app-drag],
         // 'control' for the interactive elements and [data-app-nodrag]).
-        globalThis.__mousedown = ({ button = 0, detail = 1, within = [], x = 100, y = 10 } = {}) => {
+        globalThis.__mousedown = (within = [], detail = 1, button = 0, x = 100, y = 10) => {
             const target = {
                 closest(selector) {
                     if (selector === '[data-app-drag]') return within.includes('drag') ? {} : null;
@@ -41,7 +41,7 @@ function loadBridge({ reply = '(msg) => Promise.resolve(`reply:${msg.method}`)' 
         };
 
         // The pointer moving to (x, y), with the primary button held or not.
-        globalThis.__mousemove = ({ x, y, held = true }) => {
+        globalThis.__mousemove = (x, y, held = true) => {
             for (const fn of __listeners.mousemove ?? []) fn({ screenX: x, screenY: y, buttons: held ? 1 : 0 });
         };
 
@@ -58,8 +58,8 @@ function loadBridge({ reply = '(msg) => Promise.resolve(`reply:${msg.method}`)' 
         get posted() { return page.get('__posted'); },
         get heard() { return page.get('__heard'); },
         emit: (name, detail) => page.run(`__appEmit(${JSON.stringify(name)}, ${JSON.stringify(detail)})`),
-        mousedown: (opts) => page.run(`__mousedown(${JSON.stringify(opts)})`),
-        mousemove: (opts) => page.run(`__mousemove(${JSON.stringify(opts)})`),
+        mousedown: (...args) => page.run(`__mousedown(...${JSON.stringify(args)})`),
+        mousemove: (...args) => page.run(`__mousemove(...${JSON.stringify(args)})`),
         mouseup: () => page.run('__mouseup()'),
     };
 }
@@ -68,19 +68,19 @@ function loadBridge({ reply = '(msg) => Promise.resolve(`reply:${msg.method}`)' 
 
 test('app.api.call posts the name and args', () => {
     const bridge = loadBridge();
-    const result = bridge.page.settle("app.api.call('icon', { file: 'a.svg' })");
-    assert.deepEqual(bridge.posted, [{ method: 'api.call', args: { name: 'icon', args: { file: 'a.svg' } } }]);
+    const result = bridge.page.settle("app.api.call('icon', 'a.svg', 16)");
+    assert.deepEqual(bridge.posted, [{ method: 'api.call', args: { name: 'icon', args: ['a.svg', 16] } }]);
     assert.deepEqual(result, { value: 'reply:api.call' });
 });
 
-test('app.api.call sends null args when given none', () => {
+test('app.api.call sends empty args when given none', () => {
     const bridge = loadBridge();
     bridge.page.run("app.api.call('ping')");
-    assert.deepEqual(bridge.posted, [{ method: 'api.call', args: { name: 'ping', args: null } }]);
+    assert.deepEqual(bridge.posted, [{ method: 'api.call', args: { name: 'ping', args: [] } }]);
 });
 
 test('app.api.call hands back the launcher\'s rejection', () => {
-    const bridge = loadBridge({ reply: '() => Promise.reject(new Error("No such api: x"))' });
+    const bridge = loadBridge('() => Promise.reject(new Error("No such api: x"))');
     assert.deepEqual(bridge.page.settle("app.api.call('x')"), { error: 'No such api: x' });
 });
 
@@ -111,7 +111,7 @@ test('app.win.id is main', () => {
 });
 
 test('app.win.getState resolves with the launcher\'s reply', () => {
-    const bridge = loadBridge({ reply: '() => Promise.resolve({ win: "main", maximized: true })' });
+    const bridge = loadBridge('() => Promise.resolve({ win: "main", maximized: true })');
     assert.deepEqual(bridge.page.settle('app.win.getState()'), { value: { win: 'main', maximized: true } });
 });
 
@@ -198,82 +198,82 @@ test('in strict code, replacing __appEmit throws', () => {
 
 test('a press in a drag region does not move the window by itself', () => {
     const bridge = loadBridge();
-    bridge.mousedown({ within: ['drag'] });
+    bridge.mousedown(['drag']);
     bridge.mouseup();
     assert.deepEqual(bridge.posted, []);
 });
 
 test('dragging past the threshold from a drag region starts a drag', () => {
     const bridge = loadBridge();
-    bridge.mousedown({ within: ['drag'], x: 100, y: 10 });
-    bridge.mousemove({ x: 103, y: 12 });
+    bridge.mousedown(['drag']);
+    bridge.mousemove(103, 12);
     assert.deepEqual(bridge.posted, []);
-    bridge.mousemove({ x: 110, y: 10 });
-    bridge.mousemove({ x: 130, y: 10 });
+    bridge.mousemove(110, 10);
+    bridge.mousemove(130, 10);
     assert.deepEqual(bridge.posted, [{ method: 'win.startDrag', args: null }]);
 });
 
 test('moving after the button is released does not drag', () => {
     const bridge = loadBridge();
-    bridge.mousedown({ within: ['drag'] });
+    bridge.mousedown(['drag']);
     bridge.mouseup();
-    bridge.mousemove({ x: 200, y: 200, held: false });
+    bridge.mousemove(200, 200, false);
     assert.deepEqual(bridge.posted, []);
 });
 
 test('moving with the button no longer held does not drag', () => {
     const bridge = loadBridge();
-    bridge.mousedown({ within: ['drag'] });
-    bridge.mousemove({ x: 200, y: 200, held: false });
-    bridge.mousemove({ x: 300, y: 300 });
+    bridge.mousedown(['drag']);
+    bridge.mousemove(200, 200, false);
+    bridge.mousemove(300, 300);
     assert.deepEqual(bridge.posted, []);
 });
 
 test('a double click in a drag region maximizes', () => {
     const bridge = loadBridge();
-    bridge.mousedown({ within: ['drag'] });
+    bridge.mousedown(['drag']);
     bridge.mouseup();
-    bridge.mousedown({ within: ['drag'], detail: 2 });
+    bridge.mousedown(['drag'], 2);
     assert.deepEqual(bridge.posted, [{ method: 'win.zoom', args: null }]);
 });
 
 test('dragging on the second press of a double click does not move', () => {
     const bridge = loadBridge();
-    bridge.mousedown({ within: ['drag'], detail: 2 });
-    bridge.mousemove({ x: 200, y: 200 });
+    bridge.mousedown(['drag'], 2);
+    bridge.mousemove(200, 200);
     assert.deepEqual(bridge.posted.map((m) => m.method), ['win.zoom']);
 });
 
 test('a triple click in a drag region can drag again', () => {
     const bridge = loadBridge();
-    bridge.mousedown({ within: ['drag'], detail: 3 });
-    bridge.mousemove({ x: 200, y: 10 });
+    bridge.mousedown(['drag'], 3);
+    bridge.mousemove(200, 10);
     assert.deepEqual(bridge.posted.map((m) => m.method), ['win.startDrag']);
 });
 
 test('presses outside drag regions are left alone', () => {
     const bridge = loadBridge();
-    bridge.mousedown({ within: [] });
-    bridge.mousedown({ within: [], detail: 2 });
-    bridge.mousedown({ within: [] });
-    bridge.mousemove({ x: 200, y: 200 });
+    bridge.mousedown([]);
+    bridge.mousedown([], 2);
+    bridge.mousedown([]);
+    bridge.mousemove(200, 200);
     assert.deepEqual(bridge.posted, []);
 });
 
 test('controls inside a drag region are left alone', () => {
     const bridge = loadBridge();
-    bridge.mousedown({ within: ['drag', 'control'] });
-    bridge.mousedown({ within: ['drag', 'control'], detail: 2 });
-    bridge.mousedown({ within: ['drag', 'control'] });
-    bridge.mousemove({ x: 200, y: 200 });
+    bridge.mousedown(['drag', 'control']);
+    bridge.mousedown(['drag', 'control'], 2);
+    bridge.mousedown(['drag', 'control']);
+    bridge.mousemove(200, 200);
     assert.deepEqual(bridge.posted, []);
 });
 
 test('only the primary button drags', () => {
     const bridge = loadBridge();
-    bridge.mousedown({ within: ['drag'], button: 1 });
-    bridge.mousedown({ within: ['drag'], button: 2 });
-    bridge.mousemove({ x: 200, y: 200 });
+    bridge.mousedown(['drag'], 1, 1);
+    bridge.mousedown(['drag'], 1, 2);
+    bridge.mousemove(200, 200);
     assert.deepEqual(bridge.posted, []);
 });
 

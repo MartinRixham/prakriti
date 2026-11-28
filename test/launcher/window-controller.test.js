@@ -23,7 +23,7 @@ function fakeHost(initial = {}) {
         unmaximize() { host.calls.push('unmaximize'); },
         closePopups() { host.calls.push('closePopups'); },
         toplevelState() { return host.toplevel; },
-        beginMove(press) { host.calls.push(['beginMove', press]); },
+        beginMove(device, x, y, time) { host.calls.push(['beginMove', device, x, y, time]); },
         runScript(script) { page.run(script); },
         later(milliseconds, fn) { host.timers.push({ milliseconds, fn }); },
         flush() {
@@ -34,7 +34,7 @@ function fakeHost(initial = {}) {
     return Object.assign(host, initial);
 }
 
-function fakeDesktop({ dark = false, accent = '#3584e4', buttonLayout = 'appmenu:close' } = {}) {
+function fakeDesktop(dark = false, accent = '#3584e4', buttonLayout = 'appmenu:close') {
     const desktop = {
         dark, accent, buttonLayout,
         listeners: [],
@@ -47,8 +47,8 @@ function fakeDesktop({ dark = false, accent = '#3584e4', buttonLayout = 'appmenu
     return desktop;
 }
 
-function setup({ api, host = fakeHost(), desktop = fakeDesktop() } = {}) {
-    const controller = new WindowController({ host, api, desktop });
+function setup(host = fakeHost(), desktop = fakeDesktop(), api) {
+    const controller = new WindowController(host, desktop, api);
     return { controller, host, desktop };
 }
 
@@ -56,109 +56,111 @@ function setup({ api, host = fakeHost(), desktop = fakeDesktop() } = {}) {
 
 test('api.call calls the app\'s api with the args', async () => {
     let seen;
-    const { controller } = setup({ api: { icon: (args) => { seen = args; return '<svg/>'; } } });
-    const result = await controller.call({ method: 'api.call', args: { name: 'icon', args: { file: 'a.svg' } } });
-    assert.deepEqual(seen, { file: 'a.svg' });
+    const { controller } = setup(undefined, undefined, { icon: (...args) => { seen = args; return '<svg/>'; } });
+    const result = await controller.call('api.call', { name: 'icon', args: ['a.svg', 16] });
+    assert.deepEqual(seen, ['a.svg', 16]);
     assert.equal(result, '<svg/>');
 });
 
-test('api.call passes {} when the page gives no args', () => {
+test('api.call passes nothing when the page gives no args', () => {
     let seen;
-    const { controller } = setup({ api: { f: (args) => { seen = args; } } });
-    controller.call({ method: 'api.call', args: { name: 'f' } });
-    assert.deepEqual(seen, {});
-    controller.call({ method: 'api.call', args: { name: 'f', args: null } });
-    assert.deepEqual(seen, {});
+    const { controller } = setup(undefined, undefined, { f: (...args) => { seen = args; } });
+    controller.call('api.call', { name: 'f' });
+    assert.deepEqual(seen, []);
+    controller.call('api.call', { name: 'f', args: null });
+    assert.deepEqual(seen, []);
+    controller.call('api.call', { name: 'f', args: { file: 'a.svg' } });
+    assert.deepEqual(seen, []);
 });
 
 test('api.call hands back a promise as it is', async () => {
-    const { controller } = setup({ api: { slow: async () => 'done' } });
-    const result = controller.call({ method: 'api.call', args: { name: 'slow' } });
+    const { controller } = setup(undefined, undefined, { slow: async () => 'done' });
+    const result = controller.call('api.call', { name: 'slow' });
     assert.ok(result instanceof Promise);
     assert.equal(await result, 'done');
 });
 
 test('api.call keeps the api as `this`', () => {
-    const api = { prefix: 'x-', name(args) { return this.prefix + args.v; } };
-    const { controller } = setup({ api });
-    assert.equal(controller.call({ method: 'api.call', args: { name: 'name', args: { v: 1 } } }), 'x-1');
+    const api = { prefix: 'x-', name(v) { return this.prefix + v; } };
+    const { controller } = setup(undefined, undefined, api);
+    assert.equal(controller.call('api.call', { name: 'name', args: [1] }), 'x-1');
 });
 
 test('api.call refuses names the api does not have', () => {
-    const { controller } = setup({ api: { icon() {} } });
-    assert.throws(() => controller.call({ method: 'api.call', args: { name: 'nope' } }), /No such api: nope/);
+    const { controller } = setup(undefined, undefined, { icon() {} });
+    assert.throws(() => controller.call('api.call', { name: 'nope' }), /No such api: nope/);
 });
 
 test('api.call refuses what the api only inherits', () => {
-    const { controller } = setup({ api: { icon() {} } });
+    const { controller } = setup(undefined, undefined, { icon() {} });
     for (const name of ['toString', 'constructor', 'hasOwnProperty', '__proto__', 'valueOf']) {
-        assert.throws(() => controller.call({ method: 'api.call', args: { name } }), /No such api/, name);
+        assert.throws(() => controller.call('api.call', { name }), /No such api/, name);
     }
 });
 
 test('api.call refuses api entries that are not functions', () => {
-    const { controller } = setup({ api: { version: '1.0' } });
-    assert.throws(() => controller.call({ method: 'api.call', args: { name: 'version' } }), /No such api/);
+    const { controller } = setup(undefined, undefined, { version: '1.0' });
+    assert.throws(() => controller.call('api.call', { name: 'version' }), /No such api/);
 });
 
 test('api.call refuses a missing or odd name', () => {
-    const { controller } = setup({ api: { icon() {} } });
-    assert.throws(() => controller.call({ method: 'api.call' }), /No such api/);
-    assert.throws(() => controller.call({ method: 'api.call', args: {} }), /No such api/);
-    assert.throws(() => controller.call({ method: 'api.call', args: { name: ['icon'] } }), /No such api/);
+    const { controller } = setup(undefined, undefined, { icon() {} });
+    assert.throws(() => controller.call('api.call'), /No such api/);
+    assert.throws(() => controller.call('api.call', {}), /No such api/);
+    assert.throws(() => controller.call('api.call', { name: ['icon'] }), /No such api/);
 });
 
 test('api.call works with no api at all', () => {
-    const { controller } = setup({ api: undefined });
-    assert.throws(() => controller.call({ method: 'api.call', args: { name: 'icon' } }), /No such api/);
+    const { controller } = setup();
+    assert.throws(() => controller.call('api.call', { name: 'icon' }), /No such api/);
 });
 
 test('api.call lets the api\'s own errors through', () => {
-    const { controller } = setup({ api: { bad() { throw new Error('nope'); } } });
-    assert.throws(() => controller.call({ method: 'api.call', args: { name: 'bad' } }), /nope/);
+    const { controller } = setup(undefined, undefined, { bad() { throw new Error('nope'); } });
+    assert.throws(() => controller.call('api.call', { name: 'bad' }), /nope/);
 });
 
 // ---- app.win --------------------------------------------------------------
 
 test('win.close closes the popups first, then the window', () => {
     const { controller, host } = setup();
-    assert.equal(controller.call({ method: 'win.close' }), null);
+    assert.equal(controller.call('win.close'), null);
     assert.deepEqual(host.calls, ['closePopups', 'close']);
 });
 
 test('win.minimize minimizes', () => {
     const { controller, host } = setup();
-    assert.equal(controller.call({ method: 'win.minimize' }), null);
+    assert.equal(controller.call('win.minimize'), null);
     assert.deepEqual(host.calls, ['minimize']);
 });
 
 test('win.zoom maximizes a window that is not maximized', () => {
     const { controller, host } = setup();
-    assert.equal(controller.call({ method: 'win.zoom' }), null);
+    assert.equal(controller.call('win.zoom'), null);
     assert.deepEqual(host.calls, ['maximize']);
 });
 
 test('win.zoom restores a maximized window', () => {
-    const { controller, host } = setup({ host: fakeHost({ maximized: true }) });
-    controller.call({ method: 'win.zoom' });
+    const { controller, host } = setup(fakeHost({ maximized: true }));
+    controller.call('win.zoom');
     assert.deepEqual(host.calls, ['unmaximize']);
 });
 
 test('win.getState describes the window', () => {
     const { controller, host } = setup();
-    assert.deepEqual(controller.call({ method: 'win.getState' }),
+    assert.deepEqual(controller.call('win.getState'),
         { win: WIN_ID, fullscreen: false, maximized: false, minimized: false, focused: true });
 
     host.toplevel = { fullscreen: false, maximized: true, minimized: true };
     host.active = false;
-    assert.deepEqual(controller.call({ method: 'win.getState' }),
+    assert.deepEqual(controller.call('win.getState'),
         { win: 'main', fullscreen: false, maximized: true, minimized: true, focused: false });
 });
 
 test('win.getState: fullscreen is not maximized', () => {
     const { controller, host } = setup();
     host.toplevel = { fullscreen: true, maximized: true, minimized: false };
-    const state = controller.call({ method: 'win.getState' });
+    const state = controller.call('win.getState');
     assert.equal(state.fullscreen, true);
     assert.equal(state.maximized, false);
 });
@@ -173,30 +175,29 @@ test('win.getState gives booleans whatever the host gives', () => {
 
 test('win.startDrag does nothing before any press', () => {
     const { controller, host } = setup();
-    assert.equal(controller.call({ method: 'win.startDrag' }), null);
+    assert.equal(controller.call('win.startDrag'), null);
     assert.deepEqual(host.calls, []);
 });
 
 test('win.startDrag moves with the last press', () => {
     const { controller, host } = setup();
-    controller.recordPress({ device: 'd1', time: 1, x: 10, y: 20 });
-    controller.recordPress({ device: 'd2', time: 2, x: 30, y: 40 });
-    controller.call({ method: 'win.startDrag' });
-    assert.deepEqual(host.calls, [['beginMove', { device: 'd2', time: 2, x: 30, y: 40 }]]);
+    controller.recordPress('d1', 10, 20, 1);
+    controller.recordPress('d2', 30, 40, 2);
+    controller.call('win.startDrag');
+    assert.deepEqual(host.calls, [['beginMove', 'd2', 30, 40, 2]]);
 });
 
 test('theme.get gives the desktop\'s dark setting', () => {
-    const desktop = fakeDesktop({ dark: true });
-    const { controller } = setup({ desktop });
-    assert.deepEqual(controller.call({ method: 'theme.get' }), { dark: true });
+    const desktop = fakeDesktop(true);
+    const { controller } = setup(undefined, desktop);
+    assert.deepEqual(controller.call('theme.get'), { dark: true });
     desktop.dark = false;
-    assert.deepEqual(controller.call({ method: 'theme.get' }), { dark: false });
+    assert.deepEqual(controller.call('theme.get'), { dark: false });
 });
 
 test('unknown methods are refused', () => {
     const { controller, host } = setup();
-    assert.throws(() => controller.call({ method: 'win.explode' }), /Unknown call: win.explode/);
-    assert.throws(() => controller.call({}), /Unknown call: undefined/);
+    assert.throws(() => controller.call('win.explode'), /Unknown call: win.explode/);
     assert.throws(() => controller.call(), /Unknown call: undefined/);
     assert.deepEqual(host.calls, []);
 });

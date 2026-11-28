@@ -107,27 +107,21 @@ test('emitScript does nothing without the bridge', () => {
 
 test('desktopStyleScript sets the style and fires appdesktopstyle', () => {
     const page = new Page();
-    page.run(desktopStyleScript({ buttonLayout: 'appmenu:close', accent: '#3584e4' }));
+    page.run(desktopStyleScript('appmenu:close', '#3584e4'));
     assert.deepEqual(page.get('__appDesktopStyle'), { buttonLayout: 'appmenu:close', accent: '#3584e4' });
     assert.deepEqual(page.events, [{ type: 'appdesktopstyle' }]);
 });
 
 test('desktopStyleScript fires a plain Event', () => {
     const page = new Page('addEventListener("appdesktopstyle", (e) => { globalThis.__kind = [e instanceof Event, e instanceof CustomEvent]; });');
-    page.run(desktopStyleScript({ buttonLayout: '', accent: '' }));
+    page.run(desktopStyleScript('', ''));
     assert.deepEqual(page.get('__kind'), [true, false]);
 });
 
 test('desktopStyleScript gives null for what is unknown', () => {
     const page = new Page();
-    page.run(desktopStyleScript({ buttonLayout: '', accent: '' }));
+    page.run(desktopStyleScript('', ''));
     assert.deepEqual(page.get('__appDesktopStyle'), { buttonLayout: null, accent: null });
-});
-
-test('desktopStyleScript takes only the style from a bigger object', () => {
-    const page = new Page();
-    page.run(desktopStyleScript({ buttonLayout: ':close', accent: '', dark: true }));
-    assert.deepEqual(page.get('__appDesktopStyle'), { buttonLayout: ':close', accent: null });
 });
 
 test('popupInitScript gives the popup its id and data', () => {

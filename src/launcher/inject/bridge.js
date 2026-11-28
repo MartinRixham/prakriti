@@ -29,7 +29,7 @@
 
     window.app = {
         api: {
-            call: (name, args = null) => call('api.call', { name, args }),
+            call: (name, ...args) => call('api.call', { name, args }),
             on,
         },
         win: {
@@ -43,7 +43,7 @@
         },
         theme: {
             get: () => call('theme.get'),                       // { dark }
-            on: (callback) => on('theme', ({ dark }) => callback(dark)),
+            on: (callback) => on('theme', (theme) => callback(theme.dark)),
         },
     };
 

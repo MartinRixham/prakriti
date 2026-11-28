@@ -12,7 +12,7 @@ export class PopupSession {
 
     #onGone;
 
-    constructor(id, { onActivate, onGone }) {
+    constructor(id, onActivate, onGone) {
         this.id = id;
         this.#onActivate = onActivate;
         this.#onGone = onGone;
@@ -34,7 +34,7 @@ export class PopupSession {
 
         switch (msg.type) {
             case 'size':
-                this.#show(msg);
+                this.#show(msg.width, msg.height);
                 break;
             case 'activate':
                 this.#onActivate(msg.value ?? null);
@@ -66,7 +66,7 @@ export class PopupSession {
         }
     }
 
-    #show({ width, height }) {
+    #show(width, height) {
         if (!this.#shown) {
             this.#shown = true;
             this.#host.show(width, height);

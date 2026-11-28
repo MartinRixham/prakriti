@@ -11,14 +11,11 @@ function setupPopups(uri = 'app://main/index.html') {
         uri: () => uri,
         fireEvent: (name, detail) => fired.push({ name, detail }),
     };
-    const popups = new Popups({
-        opener,
-        createHost(spec, session) {
-            const host = fakePopover(session);
-            host.spec = spec;
-            hosts.push(host);
-            return host;
-        },
+    const popups = new Popups(opener, (id, uri, anchor, data, session) => {
+        const host = fakePopover(session);
+        host.spec = { id, uri, anchor, data };
+        hosts.push(host);
+        return host;
     });
     return { popups, fired, hosts };
 }

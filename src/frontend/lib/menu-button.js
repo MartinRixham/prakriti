@@ -17,11 +17,11 @@ export class MenuButton {
     async onBind(element) {
         element.innerHTML = await loadTemplate("lib/html/button.html");
 
-        window.addEventListener('apppopup', ({ detail }) => {
-            if (detail.type === 'activate') {
-                this.#menu.activate(detail.value);
+        window.addEventListener('apppopup', (event) => {
+            if (event.detail.type === 'activate') {
+                this.#menu.activate(event.detail.value);
             }
-            else if (detail.type === 'closed') {
+            else if (event.detail.type === 'closed') {
                 this.open = false;
             }
         });

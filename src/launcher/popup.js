@@ -21,7 +21,7 @@ function installStyle() {
         Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
 }
 
-function createPopover(opener, { id, uri, anchor, data }, session) {
+function createPopover(opener, id, uri, anchor, data, session) {
     const contentManager = makeContentManager(popupInitScript(id, data));
     onMessage(contentManager, 'appPopup', (msg) => session.pageMessage(msg));
 
@@ -61,11 +61,11 @@ function createPopover(opener, { id, uri, anchor, data }, session) {
 }
 
 export function createPopups(opener) {
-    return new Popups({
-        opener: {
+    return new Popups(
+        {
             uri: () => opener.get_uri(),
             fireEvent: (name, detail) => fireEvent(opener, name, detail),
         },
-        createHost: (spec, session) => createPopover(opener, spec, session),
-    });
+        (id, uri, anchor, data, session) => createPopover(opener, id, uri, anchor, data, session),
+    );
 }

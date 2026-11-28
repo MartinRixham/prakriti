@@ -3,6 +3,6 @@
 import System from 'system';
 import { run } from './launcher/application.js';
 
-const status = run({ id: 'org.example.App' });
+const status = run('org.example.App');
 
 System.exit(status);

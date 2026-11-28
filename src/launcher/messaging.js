@@ -25,9 +25,9 @@ export function onCall(contentManager, name, fn) {
             reply.return_error_message(`Bad message: ${e.message}`);
             return true;
         }
-        answerCall(fn, msg).then(({ json, error }) => {
-            if (error !== undefined) reply.return_error_message(error);
-            else reply.return_value(JavaScriptCore.Value.new_from_json(context, json));
+        answerCall(fn, msg).then((answer) => {
+            if (answer.error !== undefined) reply.return_error_message(answer.error);
+            else reply.return_value(JavaScriptCore.Value.new_from_json(context, answer.json));
         });
         return true;
     });

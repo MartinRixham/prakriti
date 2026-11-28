@@ -15,7 +15,7 @@ export class AppWindow {
 
     view;
 
-    constructor(app, { title, width, height, uri, api, desktop, bridge }) {
+    constructor(app, title, width, height, uri, api, desktop, bridge) {
         const contentManager = makeContentManager(bridge);
         const view = new WebKit.WebView({ user_content_manager: contentManager, settings: makeSettings() });
         makeTransparent(view);
@@ -32,10 +32,8 @@ export class AppWindow {
 
         const popups = createPopups(view);
 
-        const controller = new WindowController({
-            api,
-            desktop,
-            host: {
+        const controller = new WindowController(
+            {
                 close: () => win.close(),
                 minimize: () => win.minimize(),
                 maximize: () => win.maximize(),
@@ -50,7 +48,7 @@ export class AppWindow {
                         minimized: (st & Gdk.ToplevelState.MINIMIZED) !== 0,
                     };
                 },
-                beginMove({ device, x, y, time }) {
+                beginMove(device, x, y, time) {
                     win.get_surface()?.begin_move(device, Gdk.BUTTON_PRIMARY, x, y, time);
                 },
                 runScript: (script) => runScript(view, script),
@@ -62,9 +60,11 @@ export class AppWindow {
                     });
                 },
             },
-        });
+            desktop,
+            api,
+        );
 
-        onCall(contentManager, 'app', (msg) => controller.call(msg));
+        onCall(contentManager, 'app', (msg) => controller.call(msg?.method, msg?.args));
         onMessage(contentManager, 'appDesktopStyle', () => controller.desktopStyleRequested());
         onMessage(contentManager, 'appPopup', (msg) => popups.handle(msg));
 
@@ -74,7 +74,7 @@ export class AppWindow {
             if (event.get_event_type() === Gdk.EventType.BUTTON_PRESS &&
                 event.get_button() === Gdk.BUTTON_PRIMARY) {
                 const [, x, y] = event.get_position();
-                controller.recordPress({ device: event.get_device(), time: event.get_time(), x, y });
+                controller.recordPress(event.get_device(), x, y, event.get_time());
             }
             return Gdk.EVENT_PROPAGATE;
         });

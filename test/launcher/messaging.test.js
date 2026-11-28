@@ -137,7 +137,7 @@ test('onCall answers a rejection with its message', async () => {
 
 test('onCall answers each call on its own', async () => {
     const contentManager = fakeContentManager();
-    onCall(contentManager, 'app', ({ n }) => new Promise((resolve) => setTimeout(() => resolve(n * 10), 30 - n * 10)));
+    onCall(contentManager, 'app', (msg) => new Promise((resolve) => setTimeout(() => resolve(msg.n * 10), 30 - msg.n * 10)));
     const answers = await Promise.all([1, 2].map((n) => contentManager.call('app', `{n: ${n}}`)));
     assert.deepEqual(answers, [{ value: 10 }, { value: 20 }]);
 });

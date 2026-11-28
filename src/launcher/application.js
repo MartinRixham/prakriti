@@ -13,7 +13,7 @@ function readText(file) {
     return new TextDecoder().decode(bytes);
 }
 
-export function run({ id, title, width = 1000, height = 680, frontend = 'frontend', api = {} }) {
+export function run(id, title, width = 1000, height = 680, frontend = 'frontend', api = {}) {
     const frontendDir = Gio.File.new_for_path(System.programPath)
         .get_parent().resolve_relative_path(frontend);
 
@@ -43,13 +43,11 @@ export function run({ id, title, width = 1000, height = 680, frontend = 'fronten
             return;
         }
 
-        main = new AppWindow(app, {
-            title, width, height,
-            uri: frontendDir.get_child('index.html').get_uri(),
-            api: { icon: iconApi(), ...api },
-            desktop: new Desktop(Adw.StyleManager.get_default(), Gtk.Settings.get_default()),
-            bridge,
-        });
+        main = new AppWindow(app, title, width, height,
+            frontendDir.get_child('index.html').get_uri(),
+            { icon: iconApi(), ...api },
+            new Desktop(Adw.StyleManager.get_default(), Gtk.Settings.get_default()),
+            bridge);
 
         main.win.connect('destroy', () => { main = null; });
 

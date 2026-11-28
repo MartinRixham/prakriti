@@ -16,15 +16,15 @@ afterAll(() => {
 const icon = iconApi(dir);
 
 test('icon gives the SVG without fill, width and height', async () => {
-    assert.equal(await icon({ file: 'go-home-symbolic.svg' }),
+    assert.equal(await icon('go-home-symbolic.svg'),
         '<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0"/></svg>');
 });
 
 test('icon refuses paths that leave the icon directory', async () => {
-    await assert.rejects(() => icon({ file: '../secret.svg' }));
-    await assert.rejects(() => icon({ file: 'a/../../b.svg' }));
+    await assert.rejects(() => icon('../secret.svg'));
+    await assert.rejects(() => icon('a/../../b.svg'));
 });
 
 test('icon refuses a file that is not a string', async () => {
-    await assert.rejects(() => icon({}));
+    await assert.rejects(() => icon(undefined));
 });

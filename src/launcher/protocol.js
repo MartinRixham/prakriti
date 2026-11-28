@@ -26,7 +26,7 @@ export function emitScript(name, detail) {
 }
 
 // The desktop style, as the page reads it: '' (unknown) becomes null.
-export function desktopStyleScript({ buttonLayout, accent }) {
+export function desktopStyleScript(buttonLayout, accent) {
     const style = { buttonLayout: buttonLayout || null, accent: accent || null };
     return `window.__appDesktopStyle=${JSON.stringify(style)};window.dispatchEvent(new Event('appdesktopstyle'))`;
 }

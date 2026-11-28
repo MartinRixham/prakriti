@@ -6,10 +6,9 @@ suite('launcher/popup-session');
 
 function setupSession() {
     const events = [];
-    const session = new PopupSession('menu', {
-        onActivate: (value) => events.push(['activate', value]),
-        onGone: () => events.push(['gone']),
-    });
+    const session = new PopupSession('menu',
+        (value) => events.push(['activate', value]),
+        () => events.push(['gone']));
     const host = fakePopover(session);
     session.start(host);
     return { session, host, events };
@@ -104,7 +103,7 @@ test('a popup ignores messages it does not understand', () => {
 
 test('a popup closed before it has a host still goes', () => {
     const events = [];
-    const session = new PopupSession('p', { onActivate() { }, onGone: () => events.push('gone') });
+    const session = new PopupSession('p', () => { }, () => events.push('gone'));
     session.close();
     assert.deepEqual(events, ['gone']);
 });
