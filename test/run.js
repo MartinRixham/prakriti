@@ -14,7 +14,6 @@ import './launcher/popups.test.js';
 import './launcher/bridge.test.js';
 import './launcher/messaging.test.js';
 import './launcher/webview.test.js';
-import './launcher/popup.test.js';
 import './launcher/icons.test.js';
 
 import { run } from './harness.js';

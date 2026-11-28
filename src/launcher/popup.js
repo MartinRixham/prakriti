@@ -9,10 +9,6 @@ import { fireEvent, makeContentManager, makeSettings, makeTransparent } from './
 
 const POPOVER_STYLE = 'popover.web-popup > contents { padding: 0; }';
 
-export function popupInitScript(id, data) {
-    return `window.__appPopup=${JSON.stringify({ id, data: data ?? null })};`;
-}
-
 let styleInstalled = false;
 
 function installStyle() {
@@ -25,7 +21,8 @@ function installStyle() {
 }
 
 function createPopover(opener, id, uri, anchor, data, session) {
-    const contentManager = makeContentManager(popupInitScript(id, data));
+    const popupInitScript = `window.__appPopup=${JSON.stringify({ id, data: data ?? null })};`;
+    const contentManager = makeContentManager(popupInitScript);
     onMessage(contentManager, 'appPopup', (msg) => session.pageMessage(msg));
 
     const view = new WebKit.WebView({
