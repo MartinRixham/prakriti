@@ -50,6 +50,14 @@ export class AppWindow {
                 },
                 beginMove(device, x, y, time) {
                     win.get_surface()?.begin_move(device, Gdk.BUTTON_PRIMARY, x, y, time);
+                    // The compositor now owns the press, so the view never
+                    // sees its release. Left alone, WebKit's click gesture
+                    // would take the next press as part of this one, and a
+                    // double click straight after a drag would go unseen.
+                    const controllers = view.observe_controllers();
+                    for (let i = 0; i < controllers.get_n_items(); i++) {
+                        controllers.get_item(i).reset();
+                    }
                 },
                 runScript: (script) => runScript(view, script),
                 closePopups: () => popups.closeAll(),
