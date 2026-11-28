@@ -11,3 +11,19 @@ export function fakeGObject(props = {}) {
         connected: () => handlers.map((h) => h.signal),
     });
 }
+
+export function fakePopover(session) {
+    const host = {
+        session,
+        shown: null,
+        popdowns: 0,
+        disposed: 0,
+        show(width, height) { host.shown = { width, height }; },
+        popdown() {
+            host.popdowns++;
+            session.closed();
+        },
+        dispose() { host.disposed++; },
+    };
+    return host;
+}

@@ -62,12 +62,10 @@ function createPopover(opener, { id, uri, anchor, data }, session) {
     };
 }
 
-// The popups of one web view's pages.
 export function createPopups(opener) {
     return new Popups({
         opener: {
             uri: () => opener.get_uri(),
-            zoom: () => opener.get_zoom_level(),
             fireEvent: (name, detail) => fireEvent(opener, name, detail),
         },
         createHost: (spec, session) => createPopover(opener, spec, session),

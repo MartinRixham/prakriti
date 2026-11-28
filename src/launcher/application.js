@@ -61,7 +61,6 @@ export function run({ id, title, width = 1000, height = 680, frontend = 'fronten
             const handler = main.view.connect('notify::title', (view) => {
                 if (view.title) {
                     GLib.set_application_name(view.title);
-                    named = true;
                     view.disconnect(handler);
                 }
             });
