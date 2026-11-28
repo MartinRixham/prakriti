@@ -27,6 +27,23 @@ meson test -C build
 
 The output is TAP; `meson test -C build -v` shows it.
 
+### Integration tests
+
+`test/integration` tests the launcher's window and popups with a real
+`Adw.Application`, GTK widgets, WebKit views and the injected bridge.
+They need a display, so `test/integration/run.sh` runs them in a headless
+mutter with a session bus of its own:
+
+```sh
+sh test/integration/run.sh gjs -m test/integration/run.js
+```
+
+As with the unit tests, a filter can follow `run.js`. `meson test` runs them
+as the `integration` suite when `mutter` and `dbus-run-session` are
+installed, and skips them otherwise. Leave them out with
+`meson test -C build --no-suite integration`, or run only them with
+`--suite integration`.
+
 ## Running the demo app
 
 `src/main.js` is a small demo app built on the launcher, serving the page in

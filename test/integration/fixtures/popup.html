@@ -1,0 +1,7 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>popup</title>
+<script>
+    window.__seen = window.__appPopup;
+    window.webkit.messageHandlers.appPopup.postMessage({ type: 'size', width: 120, height: 80 });
+</script>

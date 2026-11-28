@@ -9,16 +9,25 @@ on:
 
 jobs:
   test:
-    name: Unit tests
+    name: Tests
     runs-on: ubuntu-latest
-    container: fedora:latest
+    container:
+      image: fedora:latest
+      # WebKit sandboxes its web and network processes with bubblewrap, which
+      # cannot create namespaces in an unprivileged container.
+      options: --privileged
     steps:
       - name: Install dependencies
         # JavaScriptCore 6.0 (from webkitgtk6.0) is loaded by the messaging tests.
-        run: dnf install -y --setopt=install_weak_deps=False gjs meson ninja-build webkitgtk6.0
+        # The integration tests also need libadwaita, and run in a headless
+        # mutter on a session bus from dbus-daemon, rendering in software.
+        run: >-
+          dnf install -y --setopt=install_weak_deps=False
+          gjs meson ninja-build webkitgtk6.0 libadwaita mutter dbus-daemon
       - uses: actions/checkout@v4
       - name: Configure
-        run: meson setup _build
+        # Fail here, rather than skip the integration tests, if mutter is missing.
+        run: meson setup _build -Dintegration_tests=enabled
       - name: Test
         run: meson test -C _build --print-errorlogs
       - name: Upload test log

@@ -52,3 +52,18 @@ test('unit', gjs,
   protocol: 'tap',
   workdir: meson.current_build_dir(),
 )
+
+# GTK and WebKit for real, in a headless mutter. By default they are
+# skipped without one; -Dintegration_tests=enabled makes that an error.
+mutter = find_program('mutter', required: get_option('integration_tests'))
+dbus_run_session = find_program('dbus-run-session', required: get_option('integration_tests'))
+if mutter.found() and dbus_run_session.found()
+  test('integration', find_program('sh'),
+    args: [files('test/integration/run.sh'),
+      gjs, '-m', meson.current_build_dir() / 'test-stage/test/integration/run.js'],
+    depends: test_stage,
+    protocol: 'tap',
+    suite: 'integration',
+    workdir: meson.current_build_dir(),
+  )
+endif

@@ -1,0 +1,11 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Window page</title>
+<script>
+    window.__states = [];
+    window.__themes = [];
+    window.__popupEvents = [];
+    app.win.onState((state) => __states.push(state));
+    app.theme.on((dark) => __themes.push(dark));
+    addEventListener('apppopup', (event) => __popupEvents.push(event.detail));
+</script>

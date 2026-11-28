@@ -1,2 +1,4 @@
 option('demo', type: 'boolean', value: true,
   description: 'Install the demo app as well as the library')
+option('integration_tests', type: 'feature', value: 'auto',
+  description: 'Run the integration tests in a headless mutter (needs mutter and dbus-run-session)')
